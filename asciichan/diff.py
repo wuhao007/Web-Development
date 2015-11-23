@@ -16,6 +16,9 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), a
 
 art_key = db.Key.from_path('ASCIIChan', 'arts')
 
+def console(s):
+    sys.stderr.write('%s\n' % s)
+
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
@@ -35,7 +38,6 @@ def gmap_img(points):
 IP_URL = "http://api.hostip.info/?ip="
 def get_coords(ip):
     ip = "4.2.2.2"
-    ip = "23.24.209.141"
     url = IP_URL + ip
     content = None
     try:
@@ -68,11 +70,13 @@ class MainPage(Handler):
         #prevent the running of multiple queries
         arts = list(arts)
 
+        #find which arts have coords
         img_url = None
         points = filter(None, (a.coords for a in arts))
-        self.write(repr(points))
         if points:
             img_url = gmap_img(points)
+
+        #display the image URL
 
         self.render("front.html", title = title, art = art, error = error, arts = arts, img_url = img_url)
 
@@ -100,4 +104,5 @@ class MainPage(Handler):
             error = "we need both a title and some artwork!"
             self.render_front(error = error, title = title, art =art)
 
-app = webapp2.WSGIApplication([('/', MainPage)], debug=True)
+app = webapp2.WSGIApplication([('/', MainPage)],
+                  debug=True)

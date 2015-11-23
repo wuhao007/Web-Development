@@ -11,6 +11,11 @@
   			margin: 0 auto;
   			padding: 10px;
   		}
+        .map {
+            position: absolute;
+            right: 0;
+            top: 112px;
+        }
   		.error {
   			color: red;
   		}
@@ -62,6 +67,11 @@
       		<div class="error">{{error}}</div>
       		<input type="submit">
     	</form>
+
+        {% if img_url %}
+            <img class="map" src="{{img_url}}">
+        {% endif %}
+
     	<hr>
     	{% for art in arts %}
     		<div class="art">
