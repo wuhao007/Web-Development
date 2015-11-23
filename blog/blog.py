@@ -35,7 +35,8 @@ class BlogHandler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
         params['user'] = self.user
-        return render_str(template, **params)
+        t = jinja_env.get_template(template)
+        return t.render(params)
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
@@ -313,9 +314,12 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/unit2/rot13', Rot13),
                                ('/unit2/signup', Unit2Signup),
                                ('/unit2/welcome', Welcome),
-                               ('/blog/?(?:\.json)?', BlogFront),
-                               ('/blog/([0-9]+)(?:\.json)?', PostPage),
+                               ('/blog/?(?:.json)?', BlogFront),
+                               ('/blog/([0-9]+)(?:.json)?', PostPage),
                                ('/blog/newpost', NewPost),
+                               ('/blog/signup', Register),
+                               ('/blog/login', Login),
+                               ('/blog/logout', Logout),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
