@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import urllib2
+import logging
 from xml.dom import minidom
 
 from string import letters
@@ -55,18 +56,26 @@ class Art(db.Model):
     art = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     coords = db.GeoPtProperty( )
-
-class MainPage(Handler):
-    def render_front(self, title="", art="", error=""):
+CACHE = {}
+def top_arts():
+    key = 'top'
+    if key in CACHE:
+        arts = CACHE[key]
+    else:
+        logging.error("DB QUERY")
         arts = db.GqlQuery("SELECT * "
                             "FROM Art "
                             "WHERE ANCESTOR IS :1 "
                             "ORDER BY created DESC "
                             "LIMIT 10",
                             art_key)
-
-        #prevent the running of multiple queries
         arts = list(arts)
+        CACHE[key] = arts
+    return arts
+    
+class MainPage(Handler):
+    def render_front(self, title="", art="", error=""):
+        arts = top_arts()
 
         img_url = None
         points = filter(None, (a.coords for a in arts))
