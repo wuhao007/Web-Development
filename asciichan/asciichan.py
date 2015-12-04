@@ -10,6 +10,7 @@ from string import letters
 import webapp2
 import jinja2
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -56,12 +57,11 @@ class Art(db.Model):
     art = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     coords = db.GeoPtProperty( )
-CACHE = {}
-def top_arts():
+
+def top_arts(update = False):
     key = 'top'
-    if key in CACHE:
-        arts = CACHE[key]
-    else:
+    arts = memcache.get(key)
+    if arts is None or update:
         logging.error("DB QUERY")
         arts = db.GqlQuery("SELECT * "
                             "FROM Art "
@@ -70,7 +70,7 @@ def top_arts():
                             "LIMIT 10",
                             art_key)
         arts = list(arts)
-        CACHE[key] = arts
+        memcache.set(key, arts)
     return arts
     
 class MainPage(Handler):
@@ -103,6 +103,7 @@ class MainPage(Handler):
                 p.coords = coords
 
             p.put()
+            top_arts(True)
 
             self.redirect("/")
         else:
