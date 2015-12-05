@@ -78,3 +78,11 @@ input[type=submit] {
 .post-content {
     margin-top: 5px;
 }
+
+.age {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    color: gray;
+    font-size: 12px;
+}

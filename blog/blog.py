@@ -4,11 +4,13 @@ import random
 import hashlib
 import hmac
 import json
+from datetime import datetime, timedelta
 from string import letters
 
 import webapp2
 import jinja2
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -151,22 +153,28 @@ class Post(db.Model):
 
 class BlogFront(BlogHandler):
     def get(self):
-        posts = db.GqlQuery("select * from Post order by created desc limit 10")
+        posts, age = get_posts()
         if self.format == 'html':
-            self.render('front.html', posts = posts)
+            self.render('front.html', posts = posts, age = age_str(age))
         else:
             return self.render_json([p.as_dict() for p in posts])
 
 class PostPage(BlogHandler):
     def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
+        post_key = 'POST_' + post_id
+        post, age = age_get(post_key)
+
+        if not post:
+            key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+            post = db.get(key)
+            age_set(post_key, post)
+            age = 0
 
         if not post:
             self.error(404)
             return
         if self.format == 'html':
-            self.render("permalink.html", post = post)
+            self.render("permalink.html", post = post, age = age_str(age))
         else:
             self.render_json(post.as_dict())
 
@@ -295,6 +303,11 @@ class Logout(BlogHandler):
         self.logout()
         self.redirect('/signup')
 
+class Flush(BlogHandler):
+    def get(self):
+        memcache.flush_all()
+        self.redirect('/blog')
+
 class Unit3Welcome(BlogHandler):
     def get(self):
         if self.user:
@@ -310,6 +323,40 @@ class Welcome(BlogHandler):
         else:
             self.redirect('/unit2/signup')
 
+def age_set(key, val):
+    save_time = datetime.utcnow()
+    memcache.set(key, (val, save_time))
+
+def age_get(key):
+    r = memcache.get(key)
+    if r:
+        val, save_time = r
+        age = (datetime.utcnow() - save_time).total_seconds()
+    else:
+        val, age = None, 0
+    return val, age
+
+def add_post(ip, post):
+    post.put()
+    get_posts(update = True)
+    return str(post.key().id())
+
+def get_posts(update = False):
+    mc_key = 'BLOGS'
+    posts, age = age_get(mc_key)
+    if update or posts is None:
+        q = Post.all().order('-created').fetch(limit = 10)
+        posts = list(q)
+        age_set(mc_key, posts)
+    return posts, age
+
+def age_str(age):
+    s = 'queried %s seconds ago'
+    age = int(age)
+    if age == 1:
+        s = s.replace('seconds', 'second')
+    return s % age
+
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/unit2/rot13', Rot13),
                                ('/unit2/signup', Unit2Signup),
@@ -320,6 +367,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/signup', Register),
                                ('/blog/login', Login),
                                ('/blog/logout', Logout),
+                               ('/blog/flush', Flush),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
