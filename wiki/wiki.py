@@ -51,8 +51,7 @@ class Handler(webapp2.RequestHandler):
     def render_str(self, template, **params):
         params['user'] = self.user
         params['gray_style'] = gray_style
-        t = jinja_env.get_template(template)
-        return t.render(params)
+        return render_str(template, **params)
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
@@ -92,14 +91,6 @@ class Handler(webapp2.RequestHandler):
     def notfound(self):
         self.error(404)
         self.write('<h1>404: Not Found</h1>Sorry, my friend, but that page does not exist.')
-
-def render_post(response, post):
-    response.out.write('<b>' + post.subject + '</b><br>')
-    response.out.write(post.content)
-
-class MainPage(Handler):
-    def get(self):
-        self.write('Hello, Udacity!')
 
 ##### user stuff
 def make_salt(length = 5):
@@ -194,24 +185,6 @@ class Signup(Handler):
 
     def done(self, *a, **kw):
         raise NotImplementedError
-
-class Unit2Signup(Signup):
-    def done(self):
-        self.redirect('/unit2/welcome?username=' + self.username)
-
-class Register(Signup):
-    def done(self):
-        #make sure the user doesn't already exist
-        u = User.by_name(self.username)
-        if u:
-            msg = 'That user already exists.'
-            self.render('signup-form.html', error_username = msg)
-        else:
-            u = User.register(self.username, self.password, self.email)
-            u.put()
-
-            self.login(u)
-            self.redirect('/unit3/welcome')
 
 class Login(Handler):
     def get(self):
@@ -330,8 +303,7 @@ class WikiPage(Handler):
            
 
 PAGE_RE = r'(/(?:[a-zA-Z0-9_-]+/?)*)'
-app = webapp2.WSGIApplication([('/', MainPage),
-                               ('/signup', Signup),
+app = webapp2.WSGIApplication([('/signup', Signup),
                                ('/login', Login),
                                ('/logout', Logout),
                                ('/_history' + PAGE_RE, HistoryPage),
