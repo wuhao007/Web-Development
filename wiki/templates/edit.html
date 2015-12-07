@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block controls %}
+  {% if page %}
+    <a class="gray-link" href="{{path}}">view</a>
+ 
+    <a class="gray-link" href="/_history{{path}}">history</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<form class="main-edit"
+      method="post">
+  <textarea name="content">{{page and page.content or ""}}</textarea>
+  <div class="form-footer">
+    <button type="submit">Save</button>
+  </div>
+</form>
+{% endblock %} 
