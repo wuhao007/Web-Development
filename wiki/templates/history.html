@@ -3,7 +3,7 @@
 {% block controls %}
   {% if user %}
   <a class="gray-link" href="/_edit{{path}}">edit</a>
-  
+  | 
   {% endif %}
   <a class="grat-link" href="/{{path}}">view</a>
 {% endblock %}
@@ -22,13 +22,13 @@
 
       <td class="link-cell">
         <a class="gray-link"
-          href="{{path}}?v={{p.key().id()}}">view</a>
+           href="{{path}}?v={{p.key().id()}}">view</a>
       </td>
 
       {% if user %}
       <td class="link-cell">
         <a class=gray-link"
-          href="/_edit{{path}}?v={{p.key().id()}}">Edit</a>
+           href="/_edit{{path}}?v={{p.key().id()}}">Edit</a>
       </td>
       {% endif %}
     </tr>      
